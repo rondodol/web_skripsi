@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="text-center mb-4">
+    <h4 class="fw-bold text-primary">Halo {{ request.user.username }},</h4>
+    <p class="text-muted">Pilih genre & platform favorit anak Anda:</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="row justify-content-center gap-3">
+      <!-- Genre -->
+      <div class="col-md-5 p-4 bg-light rounded shadow-sm">
+        <h5 class="fw-bold text-primary mb-3">Genre Favorit</h5>
+        <div class="d-flex flex-wrap gap-2">
+          {% for genre in genre_choices %}
+            <button type="button"
+              class="btn btn-outline-primary genre-btn {% if genre in selected_genres %}active{% endif %}"
+              data-value="{{ genre }}">{{ genre.title }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="favorite_genres" id="selected-genres">
+      </div>
+
+      <!-- Platform -->
+      <div class="col-md-5 p-4 bg-light rounded shadow-sm">
+        <h5 class="fw-bold text-primary mb-3">Platform Favorit</h5>
+        <div class="d-flex flex-wrap gap-2">
+          {% for platform in platform_choices %}
+            <button type="button"
+              class="btn btn-outline-primary platform-btn {% if platform in selected_platforms %}active{% endif %}"
+              data-value="{{ platform }}">{{ platform.title }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="favorite_platforms" id="selected-platforms">
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-success px-4" id="save-btn">
+        <i class="bi bi-check2-square"></i> Simpan Preferensi
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const genreButtons = document.querySelectorAll('.genre-btn');
+    const platformButtons = document.querySelectorAll('.platform-btn');
+    const genreInput = document.getElementById('selected-genres');
+    const platformInput = document.getElementById('selected-platforms');
+
+    function updateHiddenInput(buttons, input) {
+      const selected = [];
+      buttons.forEach(btn => {
+        if (btn.classList.contains('active')) {
+          selected.push(btn.dataset.value);
+        }
+      });
+      input.value = selected.join(',');
+    }
+
+    genreButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        updateHiddenInput(genreButtons, genreInput);
+      });
+    });
+
+    platformButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        updateHiddenInput(platformButtons, platformInput);
+      });
+    });
+
+    // Update saat submit untuk pastikan data terkirim
+    document.querySelector("form").addEventListener("submit", function () {
+      updateHiddenInput(genreButtons, genreInput);
+      updateHiddenInput(platformButtons, platformInput);
+
+      const btn = document.getElementById("save-btn");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menyimpan...';
+    });
+
+    // Inisialisasi
+    updateHiddenInput(genreButtons, genreInput);
+    updateHiddenInput(platformButtons, platformInput);
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Forms</title>
+    <!-- Sertakan Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-......" 
+          crossorigin="anonymous">
+</head>
+<body class="p-4">
+    <div class="container">
+        <h2>Test LoginForm</h2>
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            {{ login_form.as_p }}
+        </form>
+
+        <h2>Test PreferenceForm</h2>
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            {{ pref_form.as_p }}
+        </form>
+
+        <h2>Test RecommendForm</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ rec_form.as_p }}
+        </form>
+    </div>
+
+    <!-- JS Bootstrap jika diperlukan (tidak wajib untuk form statis) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-......" crossorigin="anonymous"></script>
+</body>
+</html>
