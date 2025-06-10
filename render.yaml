@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: mainaman
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn web_skripsi.wsgi"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        value: "django-insecure-&*h(m1oi@+-z_sv9tk(...)"
+      - key: DEBUG
+        value: "False"

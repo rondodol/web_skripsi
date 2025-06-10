@@ -1,5 +1,20 @@
-venv_webskripsi/
+# Python artifacts
 *.pyc
 __pycache__/
+**/__pycache__/
+venv_webskripsi/
 db.sqlite3
+
+# Env file
 .env
+
+# Editor & OS junk
+*.DS_Store
+*.log
+
+# Jupyter / Notebook
+.ipynb_checkpoints/
+
+# Optional: ignore backup requirements
+requirements-full.txt
+requirements-final.txt
