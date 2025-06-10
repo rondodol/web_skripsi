@@ -3,7 +3,7 @@ from django.shortcuts import redirect
 from . import views
 
 urlpatterns = [
-    path('', views.landing_or_redirect, name='landing_or_redirect'),  # ganti satu path utama
+    path('', views.landing_or_redirect, name='landing_or_redirect'), 
     path('home/', views.home_view, name='home'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
