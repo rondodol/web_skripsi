@@ -16,8 +16,8 @@ tqdm
 requests
 pyarrow
 
-torch==2.0.1
 transformers==4.33.3
+tokenizers==0.13.3
 sentence-transformers==2.2.2
-tokenizers==0.14.1
+torch==2.0.1
 safetensors
