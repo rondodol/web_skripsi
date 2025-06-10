@@ -119,13 +119,13 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="{% url 'recommend' %}">Cari Rekomendasi</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'collection' %}">Koleksi</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#about">Tentang</a></li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                {% if user.is_authenticated %}
+            {% if user.is_authenticated %}
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'recommend' %}">Cari Rekomendasi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'collection' %}">Koleksi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#about">Tentang</a></li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ user.username }}</a>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -133,10 +133,12 @@
                             <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
                         </ul>
                     </li>
-                {% else %}
+                </ul>
+            {% else %}
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="btn btn-primary" href="{% url 'login' %}">Login</a></li>
-                {% endif %}
-            </ul>
+                </ul>
+            {% endif %}
         </div>
     </div>
 </nav>
