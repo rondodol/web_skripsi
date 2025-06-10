@@ -11,25 +11,6 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={'placeholder': 'Password', 'class': 'form-control'})
     )
 
-# class PreferenceForm(forms.Form):
-#     favorite_genres = forms.MultipleChoiceField(
-#         widget=forms.CheckboxSelectMultiple,
-#         required=False,
-#         label="Genre Favorit"
-#     )
-#     favorite_platforms = forms.MultipleChoiceField(
-#         widget=forms.CheckboxSelectMultiple,
-#         required=False,
-#         label="Platform Favorit"
-#     )
-
-#     def __init__(self, *args, **kwargs):
-#         genre_choices = kwargs.pop('genre_choices', [])
-#         platform_choices = kwargs.pop('platform_choices', [])
-#         super().__init__(*args, **kwargs)
-#         self.fields['favorite_genres'].choices = genre_choices
-#         self.fields['favorite_platforms'].choices = platform_choices
-
 class RecommendForm(forms.Form):
     game_name = forms.CharField(label="Nama Game (opsional)", required=False)
     genre = forms.CharField(label="Genre (opsional)", required=False)

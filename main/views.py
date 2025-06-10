@@ -38,7 +38,7 @@ def get_all_genre_platform_choices():
 
 def user_login(request):
     if request.user.is_authenticated:
-        return redirect('home')  # Ubah dari 'recommend' ke 'home'
+        return redirect('home') 
 
     if request.method == 'POST':
         form = LoginForm(request.POST)
