@@ -51,8 +51,8 @@
         </a>
         <div class="card-body text-center">
           <strong class="d-block mb-2">{{ game.name }}</strong>
-          <small class="text-muted d-block mb-1">Genre: {{ game.genre }}</small>
-          <small class="text-muted d-block mb-2">Platform: {{ game.platform }}</small>
+          <p class="mb-1"><small><strong>Genre:</strong> {{ game.genre }}</small></p>
+          <p class="mb-2"><small><strong>Platform:</strong> {{ game.platform }}</small></p>
           <form action="{% url 'toggle_collection' game.game_id %}" method="post">
             {% csrf_token %}
             {% if game.in_collection %}

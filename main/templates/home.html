@@ -14,6 +14,8 @@
                 </a>
                 <div class="card-body text-center">
                     <strong class="d-block mb-2">{{ game.name }}</strong>
+                    <p class="mb-1"><small><strong>Genre:</strong> {{ game.genre }}</small></p>
+                    <p class="mb-2"><small><strong>Platform:</strong> {{ game.platform }}</small></p>
                     <form action="{% url 'toggle_collection' game.game_id %}" method="post">
                         {% csrf_token %}
                         {% if game.in_collection %}
@@ -41,6 +43,8 @@
                 </a>
                 <div class="card-body text-center">
                     <strong class="d-block mb-2">{{ game.name }}</strong>
+                    <p class="mb-1"><small><strong>Genre:</strong> {{ game.genre }}</small></p>
+                    <p class="mb-2"><small><strong>Platform:</strong> {{ game.platform }}</small></p>
                     <form action="{% url 'toggle_collection' game.game_id %}" method="post">
                         {% csrf_token %}
                         {% if game.in_collection %}

@@ -128,6 +128,8 @@ def recommend_view(request):
     user_collections = set(Collection.objects.filter(user=user).values_list('game__game_id', flat=True))
     for game in games:
         game.in_collection = game.game_id in user_collections
+        game.genre = game.genre.replace(',', ', ').replace("'", "").replace('"', '') if game.genre else '-'
+        game.platform = game.platform.replace(',', ', ').replace("'", "").replace('"', '') if game.platform else '-'
 
     return render(request, 'recommend.html', {
         'form': form,
@@ -157,6 +159,8 @@ def register_view(request):
 @login_required
 def game_detail(request, game_id):
     game = get_object_or_404(Game, game_id=game_id)
+    game.genre = game.genre.replace(',', ', ') if game.genre else '-'
+    game.platform = game.platform.replace(',', ', ') if game.platform else '-'
     in_collection = Collection.objects.filter(user=request.user, game=game).exists()
 
     try:
@@ -188,6 +192,8 @@ def game_detail(request, game_id):
     # Cek koleksi user untuk tiap game serupa
     for g in similar_games:
         g.in_collection = Collection.objects.filter(user=request.user, game=g).exists()
+        g.genre = g.genre.replace(',', ', ') if g.genre else '-'
+        g.platform = g.platform.replace(',', ', ') if g.platform else '-'
 
     return render(request, 'game_detail.html', {
         'game': game,
@@ -263,6 +269,17 @@ def home_view(request):
         game.in_collection = game.game_id in user_collections
     for game in other_users_liked:
         game.in_collection = game.game_id in user_collections
+
+    for g in list(recommended_games) + list(other_users_liked):
+        if g.genre:
+            g.genre = g.genre.replace(',', ', ').replace("'", "").replace('"', '')
+        else:
+            g.genre = '-'
+
+        if g.platform:
+            g.platform = g.platform.replace(',', ', ').replace("'", "").replace('"', '')
+        else:
+            g.platform = '-'
 
     return render(request, 'home.html', {
         'recommended_games': recommended_games,
