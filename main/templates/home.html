@@ -5,7 +5,7 @@
 <div class="container">
     <h3 class="section-title">Untuk Anda</h3>
     {% if recommended_games %}
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <div class="card-container">
         {% for game in recommended_games %}
         <div class="col">
             <div class="card h-100">
@@ -34,7 +34,7 @@
     {% endif %}
 
     <h4 class="section-title mt-5">User Lain Menyukai Ini</h4>
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <div class="card-container">
         {% for game in other_users_liked %}
         <div class="col">
             <div class="card h-100">
