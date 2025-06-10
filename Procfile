@@ -1,1 +1,1 @@
-web: gunicorn web_skripsi.wsgi --log-file -
+web: gunicorn web_skripsi.wsgi

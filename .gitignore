@@ -1,8 +1,5 @@
 venv_webskripsi/
-__pycache__/
 *.pyc
-*.sqlite3
+__pycache__/
 db.sqlite3
 .env
-staticfiles/
-*.exe
