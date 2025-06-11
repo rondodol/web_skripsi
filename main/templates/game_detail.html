@@ -1,53 +1,56 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
 <div class="container mt-4">
   <div class="row">
     <!-- Kiri: Gambar & Rating -->
-    <div class="col-md-4 text-center">
-      <img src="{{ game.background_image|default:'https://via.placeholder.com/600x300?text=No+Image' }}"
-           class="img-fluid rounded shadow mb-3" alt="{{ game.name }}">
+    <div class="col-md-4 mb-4 mb-md-0">
+      <div class="text-center">
+        <img src="{{ game.background_image|default:'https://via.placeholder.com/600x300?text=No+Image' }}"
+             class="img-fluid rounded shadow mb-3" alt="{{ game.name }}">
 
-      <!-- Rating -->
-      <h6 class="mt-3">Beri Rating Anda:</h6>
-      <form method="post" id="rating-form">
-        {% csrf_token %}
-        <div id="rating-stars" class="d-flex justify-content-center gap-2">
-          {% for i in "12345" %}
-          <div class="form-check form-check-inline">
-            <input type="radio" class="btn-check" name="rating" id="star{{ i }}" value="{{ i }}"
-                   {% if form.initial.rating|stringformat:"s" == i %}checked{% endif %}>
-            <label class="btn btn-outline-warning fs-4 star-label" for="star{{ i }}" data-star="{{ i }}">&#9733;</label>
+        <!-- Rating -->
+        <h6 class="mt-3">Beri Rating Anda:</h6>
+        <form method="post" id="rating-form">
+          {% csrf_token %}
+          <div id="rating-stars" class="d-flex justify-content-center flex-wrap gap-1">
+            {% for i in "12345" %}
+            <div class="form-check form-check-inline">
+              <input type="radio" class="btn-check" name="rating" id="star{{ i }}" value="{{ i }}"
+                     {% if form.initial.rating|stringformat:"s" == i %}checked{% endif %}>
+              <label class="btn btn-outline-warning fs-4 star-label px-2" for="star{{ i }}" data-star="{{ i }}">&#9733;</label>
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
-        </div>
-        <div id="rating-error" class="text-danger mt-2" style="display:none;">Silakan pilih rating terlebih dahulu.</div>
-        <button class="btn btn-primary btn-sm mt-2" type="submit" id="submit-rating">Kirim Rating</button>
-      </form>
+          <div id="rating-error" class="text-danger mt-2" style="display:none;">Silakan pilih rating terlebih dahulu.</div>
+          <button class="btn btn-primary btn-sm mt-2" type="submit" id="submit-rating">Kirim Rating</button>
+        </form>
 
-      <!-- Rata-rata Rating -->
-      <div class="mt-3">
-        <h6>Rating Keseluruhan:</h6>
-        <div>
-          {% for i in "12345" %}
-            {% if forloop.counter <= avg_rating %}
-              <span class="text-warning fs-5">&#9733;</span>
-            {% else %}
-              <span class="text-muted fs-5">&#9734;</span>
-            {% endif %}
-          {% endfor %}
-          <small class="text-muted ms-2">
-            {{ avg_rating|floatformat:1 }}/5.0 – dari {{ rating_count }} pengguna
-          </small>
+        <!-- Rata-rata Rating -->
+        <div class="mt-3">
+          <h6>Rating Keseluruhan:</h6>
+          <div>
+            {% for i in "12345" %}
+              {% if forloop.counter <= avg_rating %}
+                <span class="text-warning fs-5">&#9733;</span>
+              {% else %}
+                <span class="text-muted fs-5">&#9734;</span>
+              {% endif %}
+            {% endfor %}
+            <small class="text-muted ms-2">
+              {{ avg_rating|floatformat:1 }}/5.0 – dari {{ rating_count }} pengguna
+            </small>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Kanan: Detail Game -->
     <div class="col-md-8">
-      <div class="d-flex justify-content-between align-items-start">
+      <div class="d-flex justify-content-between align-items-start flex-wrap">
         <h3>{{ game.name }}</h3>
-        <form action="{% url 'toggle_collection' game.game_id %}" method="post">
+        <form action="{% url 'toggle_collection' game.game_id %}" method="post" class="ms-md-3 mt-2 mt-md-0">
           {% csrf_token %}
           {% if in_collection %}
           <button class="btn btn-danger btn-sm" type="submit">
@@ -60,7 +63,7 @@
           {% endif %}
         </form>
       </div>
-      <p></p><strong>Genre:</strong> {{ game.genre|safe|cut:"'" }}</p>
+      <p><strong>Genre:</strong> {{ game.genre|safe|cut:"'" }}</p>
       <p><strong>Platform:</strong> {{ game.platform }}</p>
       <p><strong>Tanggal Rilis:</strong> {{ game.released }}</p>
       <p><strong>Deskripsi:</strong><br>{{ game.description|safe }}</p>
@@ -98,20 +101,42 @@
   </div>
 </div>
 
-<!-- Styling -->
+<!-- CSS Tambahan -->
 <style>
   .star-label {
     cursor: pointer;
     transition: all 0.2s ease;
+    border-radius: 5px;
   }
   .highlighted {
     background-color: #ffc107 !important;
     color: white !important;
   }
+  @media (max-width: 768px) {
+    .star-label {
+      font-size: 1.6rem;
+      padding: 0.25rem 0.6rem;
+    }
+  }
 </style>
 
-<!-- JavaScript -->
+<!-- Script -->
 <script>
+  // Simpan scroll sebelum reload
+  function saveScrollPosition() {
+    sessionStorage.setItem("scrollY", window.scrollY);
+  }
+
+  function restoreScrollPosition() {
+    const scrollY = sessionStorage.getItem("scrollY");
+    if (scrollY !== null) {
+      window.scrollTo(0, parseInt(scrollY));
+      sessionStorage.removeItem("scrollY");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", restoreScrollPosition);
+
   // === RATING ===
   const stars = document.querySelectorAll('.star-label');
   const form = document.getElementById('rating-form');
@@ -137,13 +162,14 @@
 
     const formData = new FormData(form);
     try {
+      saveScrollPosition();
       const response = await fetch(window.location.href, {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
-        location.reload(); // reload tanpa naik
+        location.reload();
       }
     } catch (err) {
       console.error("Gagal submit rating:", err);
@@ -162,13 +188,13 @@
 
   if (selectedRating > 0) highlightStars(selectedRating);
 
-
   // === TOGGLE KOLEKSI DI GAME SERUPA ===
   const simpanForms = document.querySelectorAll('.card-body form');
 
   simpanForms.forEach(form => {
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
+      saveScrollPosition();
       const formData = new FormData(form);
       try {
         const response = await fetch(form.action, {
@@ -177,7 +203,7 @@
         });
 
         if (response.ok) {
-          location.reload(); // reload ulang untuk ganti tombol, tetap stay
+          location.reload();
         }
       } catch (err) {
         console.error("Gagal toggle koleksi:", err);
