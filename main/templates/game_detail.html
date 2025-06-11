@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 pb-5">
   <div class="row">
     <!-- Kiri: Gambar & Rating -->
     <div class="col-md-4 mb-4 mb-md-0">
@@ -16,11 +16,9 @@
           {% csrf_token %}
           <div id="rating-stars" class="d-flex justify-content-center flex-wrap gap-1">
             {% for i in "12345" %}
-            <div class="form-check form-check-inline">
               <input type="radio" class="btn-check" name="rating" id="star{{ i }}" value="{{ i }}"
                      {% if form.initial.rating|stringformat:"s" == i %}checked{% endif %}>
-              <label class="btn btn-outline-warning fs-4 star-label px-2" for="star{{ i }}" data-star="{{ i }}">&#9733;</label>
-            </div>
+              <label class="btn btn-outline-warning fs-4 star-label" for="star{{ i }}" data-star="{{ i }}">&#9733;</label>
             {% endfor %}
           </div>
           <div id="rating-error" class="text-danger mt-2" style="display:none;">Silakan pilih rating terlebih dahulu.</div>
@@ -48,9 +46,9 @@
 
     <!-- Kanan: Detail Game -->
     <div class="col-md-8">
-      <div class="d-flex justify-content-between align-items-start flex-wrap">
-        <h3>{{ game.name }}</h3>
-        <form action="{% url 'toggle_collection' game.game_id %}" method="post" class="ms-md-3 mt-2 mt-md-0">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <h3 class="mb-0">{{ game.name }}</h3>
+        <form action="{% url 'toggle_collection' game.game_id %}" method="post">
           {% csrf_token %}
           {% if in_collection %}
           <button class="btn btn-danger btn-sm" type="submit">
@@ -107,16 +105,12 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border-radius: 5px;
+    padding: 0.25rem 0.6rem;
+    min-width: 44px;
   }
   .highlighted {
     background-color: #ffc107 !important;
     color: white !important;
-  }
-  @media (max-width: 768px) {
-    .star-label {
-      font-size: 1.6rem;
-      padding: 0.25rem 0.6rem;
-    }
   }
 </style>
 

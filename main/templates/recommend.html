@@ -17,8 +17,11 @@
       <input type="text" name="platform" value="{{ request.GET.platform }}" class="form-control rounded-3 shadow-sm" placeholder="🖥️ Platform">
     </div>
     <div class="col-12 col-md-2">
-      <button type="submit" class="btn btn-primary px-3 py-2 rounded-3 shadow-sm w-100">
+      <button type="submit" class="btn btn-primary w-100 w-md-auto px-3 py-2 rounded-3 shadow-sm text-nowrap">
         <i class="bi bi-lightning-charge-fill"></i> Rekomendasikan
+      </button>
+    </div>
+
       </button>
     </div>
   </form>
@@ -72,7 +75,9 @@
     </div>
   {% endif %}
 
-  <div class="pb-5"></div> <!-- supaya bawah tidak kosong -->
+  {% if games %}
+    <div class="pb-3"></div>
+  {% endif %} <!-- supaya bawah tidak kosong -->
 </div>
 
 <!-- Script simpan posisi scroll -->

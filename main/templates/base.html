@@ -86,85 +86,65 @@
             color: #1e88e5;
         }
 
-        /* Responsive layout tambahan */
+        /* Responsive */
         @media (max-width: 768px) {
-        .section-title {
-            font-size: 1.2rem;
-            margin-top: 20px;
-            margin-bottom: 12px;
-        }
-
-        .card {
-            margin-bottom: 20px;
-        }
-
-        .card-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        form {
-            margin-top: 20vh !important;
-        }
-
-        .btn-simpan, .btn-hapus {
-            width: 100%;
-            font-size: 1rem;
-            padding: 10px;
+            .section-title {
+                font-size: 1.2rem;
+                margin-top: 20px;
+                margin-bottom: 12px;
+            }
+            .card {
+                margin-bottom: 20px;
+            }
+            .card-container {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .container .row > div {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .preference-section {
+                flex-direction: column !important;
+            }
+            .preference-section > div {
+                width: 100% !important;
+                margin-bottom: 1rem;
+            }
+            .btn {
+                font-size: 1rem;
+                padding: 0.75rem 1.25rem;
+            }
+            .btn-simpan, .btn-hapus {
+                width: 100%;
+                font-size: 1rem;
+                padding: 10px;
+            }
+            .form-auth {
+                margin-top: 8vh;
+                margin-bottom: 8vh;
+                padding: 1.5rem !important;
+            }
+            .form-auth input,
+            .form-auth button {
+                font-size: 1rem !important;
             }
         }
 
         @media (min-width: 768px) {
-        .card-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            .card-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
             }
         }
 
         @media (min-width: 992px) {
-        .card-container {
-            grid-template-columns: repeat(3, 1fr);
+            .card-container {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
-
-        @media (max-width: 768px) {
-            .container .row > div {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .preference-section {
-            flex-direction: column !important;
-        }
-
-        .preference-section > div {
-            width: 100% !important;
-            margin-bottom: 1rem;
-        }
-
-        .btn {
-            font-size: 1rem;
-            padding: 0.6rem 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .form-auth {
-            margin-top: 8vh;
-            margin-bottom: 8vh;
-            padding: 1.5rem !important;
-            }
-
-        .form-auth input,
-        .form-auth button {
-            font-size: 1rem !important;
-            }
-        }
-
 
         .bg-simpan {
             background-color: #1e88e5 !important;
