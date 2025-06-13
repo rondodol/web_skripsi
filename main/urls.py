@@ -1,6 +1,7 @@
 from django.urls import path
 from django.shortcuts import redirect
 from . import views
+from .views import export_user_ratings
 
 urlpatterns = [
     path('', views.landing_or_redirect, name='landing_or_redirect'), 
@@ -16,5 +17,6 @@ urlpatterns = [
     path('game/<str:game_id>/toggle_collection/', views.toggle_collection, name='toggle_collection'),
     path('koleksi/', views.collection_view, name='collection'),
     path('recommend/', views.recommend_view, name='recommend'),
+    path('export-user-ratings/', export_user_ratings, name='export_user_ratings'),
 ]
 

@@ -1,151 +1,116 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
 import os
+import pickle
 import warnings
-from main.models import Game
+from sklearn.metrics.pairwise import cosine_similarity
+from main.models import Game  # Sesuaikan jika kamu deploy atau struktur berubah
+
 warnings.filterwarnings('ignore')
+
 ASSET_PATH = os.path.join(os.path.dirname(__file__), 'assets')
 
 class GameRecommender:
     def __init__(self):
         print("Memuat dan memproses aset model rekomendasi...")
         self.df_games = None
-        self.sbert_model = None
-        self.sbert_embeddings = None
-        self.training_user_profiles = {}
-        self.cf_recs_map = {}
-        self.game_id_to_idx = {}
-        self.popular_games_df = None
-        self._load_and_preprocess_assets()
+        self.cos_sim_matrix = None
+        self.cf_preds = None
+        self.game_id_to_idx = None
+        self._load_assets()
         print("Aset berhasil dimuat. Recommender siap digunakan.")
 
-    def _load_and_preprocess_assets(self):
-        try:
-            # Muat aset dasar
-            self.df_games = pd.read_pickle(os.path.join(ASSET_PATH, 'games_df.pkl'))
-            self.game_id_to_idx = {str(gid): i for i, gid in enumerate(self.df_games['game_id'])}
-            self.sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
-            self.sbert_embeddings = np.load(os.path.join(ASSET_PATH, 'sbert_embeddings.npy'))
-            
-            # Muat dan proses histori untuk popularitas dan profil CF
-            user_history_df = pd.read_pickle(os.path.join(ASSET_PATH, 'user_history.pkl'))
-            self._calculate_popularity(user_history_df)
-            self._create_training_user_profiles(user_history_df)
+    def _load_assets(self):
+        self.df_games = pd.read_pickle(os.path.join(ASSET_PATH, 'games_df.pkl'))
+        self.cos_sim_matrix = np.load(os.path.join(ASSET_PATH, 'cos_sim_matrix.npy'))
+        with open(os.path.join(ASSET_PATH, 'cf_preds.pkl'), 'rb') as f:
+            self.cf_preds = pickle.load(f)
+        with open(os.path.join(ASSET_PATH, 'game_id_to_index.pkl'), 'rb') as f:
+            self.game_id_to_idx = pickle.load(f)
 
-            # Muat dan proses rekomendasi CF
-            cf_recs_raw = pd.read_parquet(os.path.join(ASSET_PATH, 'cf_recommendations.parquet'))
-            game_id_map = pd.read_csv(os.path.join(ASSET_PATH, 'game_id_map.csv')).set_index('game_id_int')['game_id_str'].to_dict()
-            exploded_df = cf_recs_raw.explode('recommendations')
-            exploded_df['game_id'] = exploded_df['recommendations'].apply(lambda x: game_id_map.get(x['game_id_int']))
-            self.cf_recs_map = exploded_df.dropna().groupby('user_id_int')['game_id'].apply(list).to_dict()
+    def _normalize_platform_input(self, input_platform):
+        platform_map = {
+            'ps5': 'playstation 5', 'ps4': 'playstation 4', 'ps3': 'playstation 3',
+            'ps2': 'playstation 2', 'ps': 'playstation', 'xbox': 'xbox',
+            'xone': 'xbox one', 'x360': 'xbox 360', 'pc': 'pc',
+            'ns': 'nintendo switch', 'switch': 'nintendo switch',
+            'nintendo': 'nintendo', 'wii': 'wii', 'ds': 'nintendo ds',
+            'mobile': 'ios', 'android': 'android'
+        }
+        return platform_map.get(input_platform.strip().lower(), input_platform)
 
-        except FileNotFoundError as e:
-            print(f"GAGAL MEMUAT ASET: {e}")
+    # === FITUR 1: Cari Rekomendasi (Pure CBF)
+    def search_recommendations(self, game_name=None, genre=None, platform=None, top_n=10):
+        df = self.df_games.copy()
+        if game_name:
+            df = df[df['name'].str.contains(game_name, case=False, na=False)]
+        if genre:
+            df = df[df['genres'].str.contains(genre, case=False, na=False)]
+        if platform:
+            norm_platform = self._normalize_platform_input(platform)
+            df = df[df['platforms'].str.contains(norm_platform, case=False, na=False)]
+        if df.empty:
+            return df.head(0)
 
-    def _calculate_popularity(self, user_history_df):
-        all_history_games = [game for sublist in user_history_df['history_ids'] for game in sublist]
-        popularity = pd.Series(all_history_games).value_counts().reset_index()
-        popularity.columns = ['game_id', 'popularity_score']
-        self.popular_games_df = pd.merge(popularity, self.df_games, on='game_id').sort_values('popularity_score', ascending=False)
+        vectors = [self._get_game_vector(gid) for gid in df['game_id'] if gid in self.game_id_to_idx]
+        if not vectors:
+            return df.head(0)
 
-    def _create_training_user_profiles(self, user_history_df):
-        print("Membuat profil selera untuk semua user di data training...")
-        # Membuat dictionary {user_id: vector}
-        user_history_map = user_history_df.set_index('user_id')['history_ids'].to_dict()
-        user_profiles = {}
-        for user_id, history_ids in user_history_map.items():
-            history_indices = [self.game_id_to_idx[gid] for gid in history_ids if gid in self.game_id_to_idx]
-            if history_indices:
-                user_profiles[user_id] = np.average(self.sbert_embeddings[history_indices], axis=0)
-        self.training_user_profiles = user_profiles
-        
-    # --- Fungsi untuk Fitur-Fitur Website ---
+        avg_vector = np.mean(vectors, axis=0).reshape(1, -1)
+        sims = cosine_similarity(avg_vector, self.cos_sim_matrix)[0]
+        sim_series = pd.Series(sims, index=self.df_games['game_id'])
+        top_ids = sim_series.sort_values(ascending=False).head(top_n).index.tolist()
+        return self.df_games[self.df_games['game_id'].isin(top_ids)]
 
-    def get_popular_recs(self, n=10):
-        return self.popular_games_df.head(n)
-
+    # === FITUR 2: Game Serupa (Pure CBF)
     def get_similar_games(self, game_id, top_n=5):
-        game_id = str(game_id)
         if game_id not in self.game_id_to_idx:
-            return Game.objects.none()  # Kembalikan QuerySet kosong
-
-        idx = self.game_id_to_idx[game_id]
-        sim_scores = cosine_similarity(self.sbert_embeddings[idx].reshape(1, -1), self.sbert_embeddings)[0]
-        sim_series = pd.Series(sim_scores, index=self.df_games['game_id']).drop(game_id, errors='ignore')
-        top_recs_ids = sim_series.sort_values(ascending=False).head(top_n).index.tolist()
-
-        # Kembalikan sebagai QuerySet
-        return Game.objects.filter(game_id__in=top_recs_ids)
-
-    def get_search_based_recs(self, query_text, n=10):
-        if not query_text: return pd.DataFrame()
-        query_vector = self.sbert_model.encode(query_text).reshape(1, -1)
-        sim_scores = cosine_similarity(query_vector, self.sbert_embeddings)[0]
-        sim_series = pd.Series(sim_scores, index=self.df_games['game_id'])
-        top_recs_ids = sim_series.sort_values(ascending=False).head(n).index.tolist()
-        return self.df_games[self.df_games['game_id'].isin(top_recs_ids)]
-
-    def get_personalized_cbf_recs(self, user_history_ids, n=10):
-        if not user_history_ids: return self.get_popular_recs(n)
-        history_indices = [self.game_id_to_idx[gid] for gid in user_history_ids if gid in self.game_id_to_idx]
-        if not history_indices: return self.get_popular_recs(n)
-        user_profile_vector = np.average(self.sbert_embeddings[history_indices], axis=0).reshape(1, -1)
-        sim_scores = cosine_similarity(user_profile_vector, self.sbert_embeddings)[0]
-        sim_series = pd.Series(sim_scores, index=self.df_games['game_id']).drop(user_history_ids, errors='ignore')
-        top_recs_ids = sim_series.sort_values(ascending=False).head(n).index.tolist()
-        return self.df_games[self.df_games['game_id'].isin(top_recs_ids)]
-    
-    def get_cf_recs_via_proxy(self, user_history_ids, n=10):
-        if not user_history_ids: return pd.DataFrame() # Jika user baru blm punya histori, CF blm bisa
-        
-        # 1. Buat profil selera untuk user web saat ini
-        history_indices = [self.game_id_to_idx[gid] for gid in user_history_ids if gid in self.game_id_to_idx]
-        if not history_indices: return pd.DataFrame()
-        current_user_profile = np.average(self.sbert_embeddings[history_indices], axis=0).reshape(1, -1)
-        
-        # 2. Cari kembaran di data training
-        training_users = list(self.training_user_profiles.keys())
-        training_profiles = np.array([self.training_user_profiles[uid] for uid in training_users])
-        
-        sims = cosine_similarity(current_user_profile, training_profiles)[0]
-        proxy_user_id = training_users[np.argmax(sims)]
-        
-        # 3. Ambil rekomendasi CF milik si kembaran
-        # Perlu mapping dari user_id string ke int
-        user_id_map_df = pd.read_csv(os.path.join(ASSET_PATH, 'user_id_map.csv'))
-        proxy_user_int_id = user_id_map_df[user_id_map_df['user_id_str'] == proxy_user_id].iloc[0]['user_id_int']
-
-        rec_ids = self.cf_recs_map.get(proxy_user_int_id, [])
-        if not rec_ids: return pd.DataFrame()
-        
-        return self.df_games[self.df_games['game_id'].isin(rec_ids)].head(n)
-    
-    def get_similar_games_safe(self, game_id, top_n=5):
-        try:
-            game_obj = Game.objects.get(id=game_id)
-        except Game.DoesNotExist:
             return Game.objects.none()
+        idx = self.game_id_to_idx[game_id]
+        sims = self.cos_sim_matrix[idx]
+        sim_series = pd.Series(sims, index=self.df_games['game_id']).drop(game_id, errors='ignore')
+        top_ids = sim_series.sort_values(ascending=False).head(top_n).index.tolist()
+        return Game.objects.filter(game_id__in=top_ids)
 
-        # Step 1: Ambil hasil utama CBF
-        main_similars = self.get_similar_games(game_obj.game_id, top_n=top_n)
+    # === FITUR 3: Mungkin Anda Menyukai (Hybrid)
+    def get_hybrid_recommendations(self, user_genres, user_platforms, user_id=None, top_n=10):
+        alpha = 0.5  # SET FIXED ALPHA
 
-        # Step 2: Kalau sudah cukup, return langsung
-        if len(main_similars) >= top_n:
-            return main_similars[:top_n]
+        df = self.df_games.copy()
+        if user_genres:
+            df = df[df['genres'].str.contains(user_genres, case=False, na=False)]
+        if user_platforms:
+            normalized = self._normalize_platform_input(user_platforms)
+            df = df[df['platforms'].str.contains(normalized, case=False, na=False)]
+        if df.empty:
+            return df.head(0)
 
-        # Step 3: Fallback
-        sisa = top_n - len(main_similars)
-        fallback = Game.objects.filter(
-            genre__icontains=game_obj.genre.split(',')[0].strip(),
-            platform__icontains=game_obj.platform.split(',')[0].strip()
-        ).exclude(id=game_obj.id)
+        rated_game_ids = df['game_id'].tolist()
+        scored = []
+        for gid in self.df_games['game_id']:
+            cf_score = self.cf_preds.get((user_id, gid), 0) / 5.0  # ganti dari "web_user"
+            if gid not in self.game_id_to_idx:
+                cbf_score = 0
+            else:
+                sims = [self.cos_sim_matrix[self.game_id_to_idx[gid]][self.game_id_to_idx[r]]
+                        for r in rated_game_ids if r in self.game_id_to_idx]
+                cbf_score = np.mean(sims) if sims else 0
+            hybrid = alpha * cbf_score + (1 - alpha) * cf_score
+            scored.append((gid, hybrid))
 
-        fallback = fallback.exclude(id__in=[g.id for g in main_similars])[:sisa]
-
-        # Gabungkan dan kembalikan
-        combined = list(main_similars) + list(fallback)
-        return combined[:top_n]
+        top_ids = [gid for gid, _ in sorted(scored, key=lambda x: x[1], reverse=True)[:top_n]]
+        return self.df_games[self.df_games['game_id'].isin(top_ids)]
 
 
+    # === FITUR 4: User Lain Juga Menyukai (Pure CF)
+    def get_cf_recommendations(self, user_id, top_n=10):
+        scored = [(gid, score) for (uid, gid), score in self.cf_preds.items() if uid == user_id]
+        if not scored:
+            return self.df_games.head(0)
+        top_ids = [gid for gid, _ in sorted(scored, key=lambda x: x[1], reverse=True)[:top_n]]
+        return self.df_games[self.df_games['game_id'].isin(top_ids)]
+
+    def _get_game_vector(self, game_id):
+        if game_id in self.game_id_to_idx:
+            return self.cos_sim_matrix[self.game_id_to_idx[game_id]]
+        return np.zeros(self.cos_sim_matrix.shape[1])
