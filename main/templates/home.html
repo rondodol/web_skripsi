@@ -33,6 +33,7 @@
     <p class="text-muted">Belum ada rekomendasi untuk preferensi Anda.</p>
     {% endif %}
 
+    {% if other_users_liked %}
     <h4 class="section-title mt-5">User Lain Menyukai Ini</h4>
     <div class="card-container">
         {% for game in other_users_liked %}
@@ -58,14 +59,15 @@
         </div>
         {% endfor %}
     </div>
-
+    {% endif %}
+    
     <hr class="my-5">
     <section id="about" class="text-center mb-5">
         <h4 class="mb-3 text-primary fw-bold">Tentang MainAman</h4>
         <p class="text-muted mx-auto" style="max-width: 720px;">
             <strong>MainAman</strong> adalah sistem rekomendasi game yang aman untuk anak-anak.
             Hanya game dengan rating ESRB <strong>Everyone</strong> yang ditampilkan, sehingga orang tua dapat merasa tenang.
-            Anda dapat mencari game berdasarkan genre, platform, atau nama, dan menyimpan pilihan ke koleksi pribadi Anda.
+            Anda dapat mencari rekomendasi game berdasarkan genre, platform, atau nama, dan menyimpan pilihan ke koleksi pribadi Anda.
         </p>
     </section>
 </div>

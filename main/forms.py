@@ -1,6 +1,22 @@
 from django import forms
 from django.contrib.auth.models import User
 import re
+from .recommender import GameRecommender
+
+recommender_instance = GameRecommender()
+
+# Ambil genre & platform unik dari data
+GENRE_CHOICES = [('', '--- Genre (opsional) ---')] + sorted(
+    {(g.strip().title(), g.strip().title()) 
+     for gs in recommender_instance.df_games['genres'].dropna().astype(str) 
+     for g in gs.replace("'", "").replace('"', "").replace(",", " ").split()}
+)
+
+PLATFORM_CHOICES = [('', '--- Platform (opsional) ---')] + sorted(
+    {(p.strip().title(), p.strip().title()) 
+     for ps in recommender_instance.df_games['platforms'].dropna().astype(str) 
+     for p in ps.split(',')}
+)
 
 class LoginForm(forms.Form):
     username = forms.CharField(
@@ -13,8 +29,8 @@ class LoginForm(forms.Form):
 
 class RecommendForm(forms.Form):
     game_name = forms.CharField(label="Nama Game (opsional)", required=False)
-    genre = forms.CharField(label="Genre (opsional)", required=False)
-    platform = forms.CharField(label="Platform (opsional)", required=False)
+    genre = forms.ChoiceField(label="Genre (opsional)", choices=GENRE_CHOICES, required=False)
+    platform = forms.ChoiceField(label="Platform (opsional)", choices=PLATFORM_CHOICES, required=False)
 
 class RegisterForm(forms.Form):
     username = forms.CharField(

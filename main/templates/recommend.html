@@ -11,10 +11,18 @@
       <input type="text" name="game_name" value="{{ request.GET.game_name }}" class="form-control rounded-3 shadow-sm" placeholder="🎮 Nama Game">
     </div>
     <div class="col-12 col-md-3">
-      <input type="text" name="genre" value="{{ request.GET.genre }}" class="form-control rounded-3 shadow-sm" placeholder="🧩 Genre">
+      <select name="genre" class="form-select rounded-3 shadow-sm">
+        {% for val, label in form.genre.field.choices %}
+          <option value="{{ val }}" {% if val == request.GET.genre %}selected{% endif %}>🧩 {{ label }}</option>
+        {% endfor %}
+      </select>
     </div>
     <div class="col-12 col-md-3">
-      <input type="text" name="platform" value="{{ request.GET.platform }}" class="form-control rounded-3 shadow-sm" placeholder="🖥️ Platform">
+      <select name="platform" class="form-select rounded-3 shadow-sm">
+        {% for val, label in form.platform.field.choices %}
+          <option value="{{ val }}" {% if val == request.GET.platform %}selected{% endif %}>🖥️ {{ label }}</option>
+        {% endfor %}
+      </select>
     </div>
     <div class="col-12 col-md-2">
       <button type="submit" class="btn btn-primary w-100 w-md-auto px-3 py-2 rounded-3 shadow-sm text-nowrap">
