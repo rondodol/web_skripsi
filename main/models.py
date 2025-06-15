@@ -34,7 +34,7 @@ class UserProfile(models.Model):
 
 class Collection(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, to_field='game_id', db_column='game_id')
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -43,7 +43,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 class GameRating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, to_field='game_id', db_column='game_id')
     rating_value = models.FloatField()
 
     class Meta:
@@ -51,3 +51,4 @@ class GameRating(models.Model):
 
     def __str__(self):
         return f"{self.user.username} rated {self.game.name} as {self.rating_value}"
+

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import re
 import os
 import pickle
 import warnings
@@ -64,35 +65,50 @@ class GameRecommender:
     def search_recommendations(self, game_name=None, genre=None, platform=None, top_n=10):
         df = self.df_games.copy()
 
+        def clean_text(text):
+            return re.sub(r'[^a-z0-9 ]', '', str(text).lower())
+
+        # === Normalisasi nama game ===
+        df['name_clean'] = df['name'].astype(str).apply(clean_text)
+        exclude_ids = set()
+
+        # === Filter berdasarkan nama ===
         if game_name:
-            df_name_match = df[df['name'].str.contains(game_name, case=False, na=False)]
-            exclude_ids = set(df_name_match['game_id'].tolist())
-            df = df_name_match.copy()  # gunakan nama sebagai pencarian utama
-        else:
-            exclude_ids = set()
+            game_name_clean = clean_text(game_name)
+            df_name_match = df[df['name_clean'].str.contains(game_name_clean)]
+            df = df_name_match.copy()
+            # Hanya exclude game jika nama persis
+            exact_match = df[df['name_clean'] == game_name_clean]
+            exclude_ids = set(exact_match['game_id'].tolist())
+
+        # === Filter genre ===
         if genre:
             df = df[df['genres'].str.contains(genre, case=False, na=False)]
+
+        # === Filter platform ===
         if platform:
             normalized = self._normalize_platform_input(platform)
             df = df[df['platforms'].str.contains(normalized, case=False, na=False)]
 
-        # Kalau hasil df kosong, fallback ke semua data (asal salah satu input masih ada)
+        # === Fallback kalau hasil kosong ===
         if df.empty and (game_name or genre or platform):
             df = self.df_games.copy()
 
         if df.empty:
             return df.head(0)
 
+        # === Cek vektor game yang valid ===
         query_vectors = [self._get_game_vector(gid) for gid in df['game_id'] if gid in self.game_id_to_idx]
         if not query_vectors:
             return df.head(0)
 
+        # === Hitung similarity dan ambil top_n ===
         avg_vector = np.mean(query_vectors, axis=0).reshape(1, -1)
         sims = cosine_similarity(avg_vector, self.sbert_embeddings)[0]
         sim_series = pd.Series(sims, index=self.df_games['game_id'])
-        # 🚫 Exclude game yang sama dengan input (game_name)
-        sim_series = sim_series[~sim_series.index.isin(exclude_ids)]
+        sim_series = sim_series[~sim_series.index.isin(exclude_ids)]  # Jangan rekomendasiin yang persis
         top_ids = sim_series.sort_values(ascending=False).head(top_n).index.tolist()
+
         return self.df_games[self.df_games['game_id'].isin(top_ids)]
 
     # === FITUR 2: Game Serupa (Pure CBF)
