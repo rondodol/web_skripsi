@@ -227,7 +227,7 @@ def home_view(request):
     hybrid_games = Game.objects.filter(game_id__in=hybrid_df['game_id'].tolist())
 
     # === FITUR 4: Pure CF (User Lain Juga Menyukai)
-    cf_df = recommender_instance.get_cf_recommendations(str(user.id), top_n=30)
+    cf_df = recommender_instance.get_cf_recommendations(int(user.id), top_n=30)
     cf_df = cf_df[~cf_df['game_id'].isin(user_collections)].head(10)
 
     # Cek apakah CF punya hasil
