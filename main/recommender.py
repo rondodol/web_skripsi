@@ -27,7 +27,11 @@ class GameRecommender:
         self.sbert_embeddings = np.load(os.path.join(ASSET_PATH, 'sbert_embeddings.npy'))
         self.cos_sim_matrix = np.load(os.path.join(ASSET_PATH, 'cos_sim_matrix.npy'))
         with open(os.path.join(ASSET_PATH, 'cf_preds.pkl'), 'rb') as f:
-            self.cf_preds = pickle.load(f)
+            raw_preds = pickle.load(f)
+        self.cf_preds = {
+            (int(uid), int(iid)): float(score)
+            for (uid, iid), score in raw_preds.items()
+        }
         with open(os.path.join(ASSET_PATH, 'game_id_to_index.pkl'), 'rb') as f:
             self.game_id_to_idx = pickle.load(f)
 
