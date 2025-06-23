@@ -212,6 +212,7 @@ def landing_or_redirect(request):
 def home_view(request):
     user = request.user
     profile = UserProfile.objects.get(user=user)
+    print(f"[DEBUG] User ID yang login sekarang: {request.user.id}")
 
     # Ambil game yang sudah dikoleksi user
     user_collections = set(Collection.objects.filter(user=user).values_list('game__game_id', flat=True))
@@ -228,13 +229,19 @@ def home_view(request):
 
     # === FITUR 4: Pure CF (User Lain Juga Menyukai)
     cf_df = recommender_instance.get_cf_recommendations(int(user.id), top_n=30)
+    print("[COMPARE] Game ID CF murni:", cf_df['game_id'].tolist())
+
+    print("[COMPARE] Game ID hybrid top:", hybrid_df['game_id'].tolist())
     cf_df = cf_df[~cf_df['game_id'].isin(user_collections)].head(10)
+    cf_keys = recommender_instance.cf_preds.keys()
+    cf_user_ids = set(uid for uid, _ in cf_keys)
+    print(f"[DEBUG] Apakah user ID ini ({user.id}) ada di cf_preds? {'Ya' if user.id in cf_user_ids else 'Tidak'}")
 
     # Cek apakah CF punya hasil
     cf_games = []
     if not cf_df.empty:
         cf_games = Game.objects.filter(game_id__in=cf_df['game_id'].tolist())
-
+    
     # Tandai game yang sudah dikoleksi
     for g in list(hybrid_games) + list(cf_games):
         g.in_collection = g.game_id in user_collections
@@ -243,7 +250,7 @@ def home_view(request):
 
     return render(request, 'home.html', {
         'recommended_games': hybrid_games,
-        'other_users_liked': cf_games,  # kosong = tidak ditampilkan di template
+        'other_users_liked': cf_games,  
     })
 
 @login_required
@@ -275,4 +282,3 @@ def export_user_ratings(request):
     for rating in GameRating.objects.all():
         writer.writerow([rating.user.id, rating.game.game_id, rating.rating_value])
     return response
-

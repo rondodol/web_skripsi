@@ -24,6 +24,7 @@ class GameRecommender:
 
     def _load_assets(self):
         self.df_games = pd.read_pickle(os.path.join(ASSET_PATH, 'games_df.pkl'))
+        self.df_games['game_id'] = self.df_games['game_id'].astype(int)
         self.sbert_embeddings = np.load(os.path.join(ASSET_PATH, 'sbert_embeddings.npy'))
         self.cos_sim_matrix = np.load(os.path.join(ASSET_PATH, 'cos_sim_matrix.npy'))
         with open(os.path.join(ASSET_PATH, 'cf_preds.pkl'), 'rb') as f:
@@ -34,7 +35,7 @@ class GameRecommender:
         }
         with open(os.path.join(ASSET_PATH, 'game_id_to_index.pkl'), 'rb') as f:
             self.game_id_to_idx = pickle.load(f)
-
+        self.game_id_to_idx = {int(k): v for k, v in self.game_id_to_idx.items()}
     def _normalize_platform_input(self, input_platform):
         platform_map = {
             'ps5': 'playstation 5',
@@ -130,7 +131,7 @@ class GameRecommender:
         return Game.objects.filter(game_id__in=top_ids)
 
     # === FITUR 3: Mungkin Anda Menyukai (Hybrid)
-    def get_hybrid_recommendations(self, user_genres, user_platforms, user_id=None, top_n=10, alpha=0.5):
+    def get_hybrid_recommendations(self, user_genres, user_platforms, user_id=None, top_n=10, alpha=0.55):
         df = self.df_games.copy()
 
         # Step 1: Ambil preferensi
@@ -175,7 +176,13 @@ class GameRecommender:
         scored = [(gid, score) for (uid, gid), score in self.cf_preds.items() if uid == user_id]
         if not scored:
             return self.df_games.head(0)
-        top_ids = [gid for gid, _ in sorted(scored, key=lambda x: x[1], reverse=True)[:top_n]]
+        sorted_scored = sorted(scored, key=lambda x: x[1], reverse=True)
+
+        top_ids = [gid for gid, _ in sorted_scored[:top_n]]
+
+        missing_ids = [gid for gid in top_ids if gid not in self.df_games['game_id'].values]
+        print(f"[CF DEBUG] Tidak ditemukan di df_games: {missing_ids}")
+
         return self.df_games[self.df_games['game_id'].isin(top_ids)]
 
     def _get_game_vector(self, game_id):
